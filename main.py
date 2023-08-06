@@ -2,6 +2,7 @@ import tkinter as tk
 from random import shuffle
 from tkinter.messagebox import showinfo, showerror
 from PIL import ImageTk, Image
+from sys import platform
 
 colors = {
     1: '#325AA8',
@@ -13,6 +14,9 @@ colors = {
     7: '#B3763D',
     8: '#70007A',
 }
+
+w = 1 if platform == 'darwin' else 3
+h = 2 if platform == 'darwin' else 1
 
 
 class MyButton(tk.Button):
@@ -29,7 +33,8 @@ class MyButton(tk.Button):
 class MineSweeper:
     window = tk.Tk()
     window.title('MineSweeperPro')
-    window.geometry('+800+400')
+    window.resizable(False, False)
+    window.geometry('+400+200')
     icon = tk.PhotoImage(file='pngwing.com-2.png')
     window.iconphoto(False, icon)
     mine_img = ImageTk.PhotoImage(Image.open('pngwing.com-3.png').resize((40, 40)))
@@ -49,8 +54,9 @@ class MineSweeper:
             temp = []
             for j in range(MineSweeper.COLUMNS+2):
                 btn = MyButton(MineSweeper.window, x=i, y=j)
-                btn.config(command=lambda button=btn: self.click(button))
+                btn.config(command=lambda button=btn: self.click(button), width=w, height=h)
                 btn.bind('<Button-2>', self.flag)
+                btn.bind('<Button-3>', self.flag)
                 temp.append(btn)
             self.buttons.append(temp)
 
@@ -79,7 +85,7 @@ class MineSweeper:
             self.count_mines()
             MineSweeper.FIRST_CLICK = False
         if clicked_button.is_mine:
-            clicked_button.config(text='*', image=MineSweeper.mine_img, disabledforeground='red', background='red')
+            clicked_button.config(text='*', image=MineSweeper.mine_img, disabledforeground='black', background='red', compound="center")
             clicked_button.is_open = True
             for i in range(1, MineSweeper.ROW + 1):
                 for j in range(1, MineSweeper.COLUMNS + 1):
@@ -88,7 +94,7 @@ class MineSweeper:
                     if btn.is_mine:
                         btn['text'] = '*'
                         btn['image'] = MineSweeper.mine_img
-                        btn['disabledforeground'] = 'red'
+                        btn['disabledforeground'] = 'black'
             MineSweeper.GAME_OVER = True
             MineSweeper.window.after_cancel(MineSweeper.TIME_ID)
             showinfo('BOOM!!!!', 'GAME OVER')
@@ -104,7 +110,6 @@ class MineSweeper:
         not_open = MineSweeper.COLUMNS * MineSweeper.ROW
         for i in self.buttons:
             not_open -= sum([k.is_open for k in i])
-        print(not_open)
         if not_open == MineSweeper.MINES and not_open != 1:
             MineSweeper.GAME_OVER = True
             MineSweeper.window.after_cancel(MineSweeper.TIME_ID)
@@ -146,7 +151,9 @@ class MineSweeper:
 
     def settings_window(self):
         win_settings = tk.Toplevel(self.window)
+        win_settings.resizable(False, False)
         win_settings.wm_title('Settings')
+        win_settings.geometry('+500+300')
         tk.Label(win_settings, text='Number rows:').grid(row=0, column=0, padx=20, pady=10, sticky='w')
         row_entry = tk.Entry(win_settings, width=4)
         row_entry.insert(0, str(MineSweeper.MINES))
@@ -161,13 +168,25 @@ class MineSweeper:
         mines_entry.grid(row=2, column=1, padx=20, pady=10)
         tk.Button(win_settings, text='Confirm', command=lambda: self.confirm_settings(
             row_entry, column_entry, mines_entry)).grid(
-            row=3, column=0, columnspan=2, padx=20, pady=10)
+            row=3, column=0, padx=20, pady=10)
+        tk.Button(win_settings, text='Reset', command=lambda: self.reset_settings(win_settings)).grid(
+            row=3, column=1, padx=20, pady=10)
+
+    def reset_settings(self, window):
+        window.destroy()
+        self.settings_window()
 
     def confirm_settings(self, row, column, mines):
         try:
             int(row.get()), int(column.get()), int(mines.get())
         except ValueError:
             showerror('Error!', 'Numbers only')
+            return
+        if int(row.get()) < 4 or int(column.get()) < 4:
+            showerror('Error!', 'Min cells - 4x4')
+            return
+        if int(mines.get()) >= int(row.get()) * int(column.get()):
+            showerror('Error!', 'Too many mines')
             return
         MineSweeper.ROW = int(row.get())
         MineSweeper.COLUMNS = int(column.get())
