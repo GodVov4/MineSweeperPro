@@ -85,7 +85,8 @@ class MineSweeper:
             self.count_mines()
             MineSweeper.FIRST_CLICK = False
         if clicked_button.is_mine:
-            clicked_button.config(text='*', image=MineSweeper.mine_img, disabledforeground='black', background='red', compound="center")
+            clicked_button.config(
+                text='*', image=MineSweeper.mine_img, disabledforeground='black', background='red', compound="center")
             clicked_button.is_open = True
             for i in range(1, MineSweeper.ROW + 1):
                 for j in range(1, MineSweeper.COLUMNS + 1):
